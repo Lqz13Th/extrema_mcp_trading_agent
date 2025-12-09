@@ -35,9 +35,15 @@ instrument_config.json
 symbol_config.json
 symbols.json
 
-/target
+# Rust
+target/
+**/target/
 **/Cargo.lock
-**/Cargo.toml.orig
+
+# Python - uv
+**/uv.lock
+**/.python-version
+**/.python-version.*
 
 __pycache__/
 *.py[cod]
