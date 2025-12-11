@@ -28,7 +28,7 @@ impl EventHandler for McpServer {
             warn!("Failed to send data: {:?}, task: {:?}", e, msg.task_id);
         }
     }
-    
+
     async fn on_preds(&mut self, msg: InfraMsg<AltTensor>) {
         if let Err(e) = self.mcp_mediator(&msg.data).await {
             warn!("Failed to process MCP Mediator: {:?}, task: {:?}", e, msg.task_id);
@@ -41,7 +41,7 @@ impl EventHandler for McpServer {
         }
 
         if let Err(e) = self.connect_channel(&msg.data.ws_channel).await {
-            error!("Failed to connect binance trade channel: {:?}", e);
+            error!("Failed to connect trade channel: {:?}", e);
         }
     }
 

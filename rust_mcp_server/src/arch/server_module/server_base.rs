@@ -26,7 +26,7 @@ use super::{server_utils::{ModelConfig, load_model_config}};
 #[derive(Clone, Debug)]
 pub struct McpServer {
     binance_cm_cli: BinanceCmCli,
-    binance_um_cli: BinanceUmCli,
+    okx_cli: OkxCli,
     pub px: HashMap<String, f64>,
     pub model_config: HashMap<String, ModelConfig>,
     pub target_weights: TargetWeights,
@@ -44,7 +44,7 @@ impl McpServer {
         Self {
             px: HashMap::new(),
             binance_cm_cli: BinanceCmCli::default(),
-            binance_um_cli: BinanceUmCli::default(),
+            okx_cli: OkxCli::default(),
             model_config: HashMap::new(),
             target_weights: Arc::new(DashMap::default()),
             command_handles: Vec::new(),
@@ -200,9 +200,14 @@ impl McpServer {
     async fn send_data_to_model(&self, data: &DataFrame) -> InfraResult<()> {
         for (model_id, _cfg) in &self.model_config {
             let inst = "DOGE_USDT_PERP".to_string();
-            let px = self.px.get(&inst).ok_or_else(|| {
-                InfraError::Msg(format!("DOGE {} not found", model_id))
-            })?;
+            // 如果价格不存在，使用默认值 0.0（价格会在收到 trade 数据后更新）
+            let px = self.px.get(&inst).copied().unwrap_or(0.0);
+            
+            if px == 0.0 {
+                warn!("Price for {} not available yet, using 0.0. Waiting for trade data...", inst);
+                // 可以选择跳过这次发送，等待价格数据
+                continue;
+            }
 
             let ts = get_micros_timestamp();
             let port = 5001;
@@ -216,10 +221,12 @@ impl McpServer {
             let tensor = df_to_tensor(
                 data,
                 model_id.clone(),
-                *px,
+                px,
                 pos_weight,
                 ts,
             )?;
+
+            println!("tensor: {:?}", tensor);
 
             if let Some(handle) = self.find_alt_handle(&AltTaskType::ModelPreds(port), port) {
                 let cmd = TaskCommand::FeatInput(tensor);
@@ -237,7 +244,7 @@ impl McpServer {
             info!("Sending connect to {:?}", handle);
 
             // Step 1: Request connection URL
-            let ws_url = self.binance_um_cli.get_public_connect_msg(channel).await?;
+            let ws_url = self.okx_cli.get_public_connect_msg(channel).await?;
             let (tx, rx) = oneshot::channel();
             let cmd = TaskCommand::WsConnect {
                 msg: ws_url,
@@ -247,7 +254,7 @@ impl McpServer {
 
             let insts = ["DOGE_USDT_PERP".to_string()];
 
-            let ws_msg = self.binance_um_cli
+            let ws_msg = self.okx_cli
                 .get_public_sub_msg(channel, Some(&insts))
                 .await?;
 

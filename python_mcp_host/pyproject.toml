@@ -11,3 +11,9 @@ dependencies = [
     "pyzmq>=27.1.0",
     "google-generativeai>=0.8.0",
 ]
+
+[project.scripts]
+mcp_host = "python_mcp_host.__main__:main"
+
+[tool.uv]
+package = true

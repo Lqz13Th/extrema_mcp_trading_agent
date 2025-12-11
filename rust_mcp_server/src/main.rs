@@ -80,7 +80,7 @@ async fn main() {
     };
 
     let binance_ws_trade = WsTaskInfo {
-        market: Market::BinanceUmFutures,
+        market: Market::Okx,
         ws_channel: WsChannel::Trades(None),
         filter_channels: false,
         chunk: 1,
@@ -92,7 +92,7 @@ async fn main() {
 
     account_module.with_target_weights(shared_inst_target_weight.clone());
     mcp_server.with_target_weights(shared_inst_target_weight.clone());
-   
+
     let env = EnvBuilder::new()
         .with_board_cast_channel(BoardCastChannel::default_alt_event())
         .with_board_cast_channel(BoardCastChannel::default_ws_event())
