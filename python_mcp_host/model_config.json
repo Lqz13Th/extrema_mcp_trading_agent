@@ -1,0 +1,10 @@
+[
+  {
+    "port": 5001,
+    "model_id": "Gemini",
+    "account_id": "okx_test",
+    "llm_provider": "gemini",
+    "api_key": "",
+    "model_name": "gemini-2.0-flash-exp"
+  }
+]

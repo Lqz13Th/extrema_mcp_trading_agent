@@ -4,3 +4,33 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+extrema_infra = { git = "https://github.com/Lqz13Th/extrema_infra",  features = ["cex_clients"] }
+
+tokio = "1.48.0"
+reqwest = "0.12.25"
+dashmap = "6.1.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+chrono = "0.4.42"
+
+tracing = "0.1.43"
+tracing-subscriber = "0.3.22"
+
+polars = { version = "0.52.0", features = [
+    "default",
+    "dtype-full",
+    "lazy",
+    "parquet",
+    "performant",
+    "temporal",
+    "timezones",
+    # Series / Expr operations
+    "abs",
+    "cov",
+    "diff",
+    "log",
+    "pct_change",
+    "rolling_window",
+    "round_series",
+    "trigonometry",
+] }
