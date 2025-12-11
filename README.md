@@ -8,7 +8,7 @@
 
 ### 📖 项目简介
 
-这是一个基于 MCP (Model Control Protocol) 的自动化交易系统，由 Rust MCP Server 和 Python LLM Agent 组成。系统能够：
+这是一个基于 MCP (Model Context Protocol) 的自动化交易系统，由 Rust MCP Server 和 Python LLM Agent 组成。系统能够：
 - 实时接收市场数据（价格、持仓量等）
 - 使用 LLM (Gemini) 进行智能交易决策
 - 自动执行仓位调整
@@ -240,7 +240,7 @@ Price for DOGE_USDT_PERP not available yet
 
 ### 📖 Project Overview
 
-This is an automated trading system based on MCP (Model Control Protocol), consisting of a Rust MCP Server and a Python LLM Agent. The system can:
+This is an automated trading system based on MCP (Model Context Protocol), consisting of a Rust MCP Server and a Python LLM Agent. The system can:
 - Receive real-time market data (prices, open interest, etc.)
 - Use LLM (Gemini) for intelligent trading decisions
 - Automatically execute position adjustments
