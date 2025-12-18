@@ -45,7 +45,7 @@ async fn main() {
         reload_task_id: 2,
         update_task_id: 3,
         reload_interval_sec: 3600,
-        update_interval_sec: 60,
+        update_interval_sec: 30,
     };
 
     // Machine Learning models
@@ -53,12 +53,6 @@ async fn main() {
         alt_task_type: AltTaskType::ModelPreds(5001), // Zeromq port
         chunk: 1,
         task_base_id: Some(5001), // Custom task ID
-    };
-
-    let alt_data_scheduler_task = AltTaskInfo {
-        alt_task_type: AltTaskType::TimeScheduler(Duration::from_secs(180)),
-        chunk: 1,
-        task_base_id: None,
     };
 
     // For periodic reload account info from config
@@ -79,11 +73,11 @@ async fn main() {
         task_base_id: Some(acc_config.update_task_id),
     };
 
-    let binance_ws_trade = WsTaskInfo {
-        market: Market::Okx,
-        ws_channel: WsChannel::Trades(None),
-        filter_channels: false,
-        chunk: 1,
+    let binance_ws_candle = WsTaskInfo {
+        market: Market::BinanceUmFutures,
+        ws_channel: WsChannel::Candles(Some(CandleParam::OneMinute)),
+        filter_channels: false, // false for debug msg
+        chunk: 1,               // number of websocket connections for this task
         task_base_id: None,
     };
 
@@ -96,16 +90,15 @@ async fn main() {
     let env = EnvBuilder::new()
         .with_board_cast_channel(BoardCastChannel::default_alt_event())
         .with_board_cast_channel(BoardCastChannel::default_ws_event())
-        .with_board_cast_channel(BoardCastChannel::default_trade())
+        .with_board_cast_channel(BoardCastChannel::default_candle())
         .with_board_cast_channel(BoardCastChannel::default_scheduler())
         .with_board_cast_channel(BoardCastChannel::default_model_preds())
         .with_board_cast_channel(BoardCastChannel::default_account_order())
         .with_board_cast_channel(BoardCastChannel::default_account_bal_pos())
         .with_task(TaskInfo::AltTask(Arc::new(model_task)))
-        .with_task(TaskInfo::AltTask(Arc::new(alt_data_scheduler_task)))
         .with_task(TaskInfo::AltTask(Arc::new(acc_reload_scheduler_task)))
         .with_task(TaskInfo::AltTask(Arc::new(acc_update_scheduler_task)))
-        .with_task(TaskInfo::WsTask(Arc::new(binance_ws_trade)))
+        .with_task(TaskInfo::WsTask(Arc::new(binance_ws_candle)))
         .with_tasks(build_account_ws_tasks())
         .with_strategy_module(account_module)
         .with_strategy_module(mcp_server)

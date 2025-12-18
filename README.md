@@ -47,6 +47,8 @@ uv sync
 #### 3. 配置 API Key
 
 编辑 `python_mcp_host/model_config.json`:
+
+**Gemini 配置示例：**
 ```json
 [
   {
@@ -60,9 +62,50 @@ uv sync
 ]
 ```
 
+**DeepSeek 配置示例：**
+```json
+[
+  {
+    "port": 5002,
+    "model_id": "deepseek_one",
+    "account_id": "okx_test",
+    "llm_provider": "deepseek",
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "model_name": "deepseek-chat",
+    "base_url": "https://api.deepseek.com"
+  }
+]
+```
+
+**同时使用多个 LLM：**
+```json
+[
+  {
+    "port": 5001,
+    "model_id": "gemini_one",
+    "account_id": "okx_test",
+    "llm_provider": "gemini",
+    "api_key": "YOUR_GEMINI_API_KEY",
+    "model_name": "gemini-2.5-flash-lite"
+  },
+  {
+    "port": 5002,
+    "model_id": "deepseek_one",
+    "account_id": "okx_test",
+    "llm_provider": "deepseek",
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "model_name": "deepseek-chat"
+  }
+]
+```
+
 或者设置环境变量：
 ```bash
+# Gemini
 export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+
+# DeepSeek
+export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
 ```
 
 #### 4. 配置交易账户
@@ -205,7 +248,15 @@ uv run mcp_host --port 5001 --prompt "当前市场如何？建议仓位多少？
 ```
 ValueError: API key is required
 ```
-**解决**: 检查 `model_config.json` 中的 `api_key` 字段，或设置 `GEMINI_API_KEY` 环境变量
+**解决**: 
+- Gemini: 检查 `model_config.json` 中的 `api_key` 字段，或设置 `GEMINI_API_KEY` 环境变量
+- DeepSeek: 检查 `model_config.json` 中的 `api_key` 字段，或设置 `DEEPSEEK_API_KEY` 环境变量
+
+#### 问题 1.1: DeepSeek 导入错误
+```
+ImportError: OpenAI package is required for DeepSeek
+```
+**解决**: 安装 OpenAI 包：`pip install openai` 或 `uv sync`（会自动安装依赖）
 
 #### 问题 2: 端口被占用
 ```
@@ -242,9 +293,10 @@ Price for DOGE_USDT_PERP not available yet
 
 This is an automated trading system based on MCP (Model Context Protocol), consisting of a Rust MCP Server and a Python LLM Agent. The system can:
 - Receive real-time market data (prices, open interest, etc.)
-- Use LLM (Gemini) for intelligent trading decisions
+- Use LLM (Gemini / DeepSeek) for intelligent trading decisions
 - Automatically execute position adjustments
 - Support both long and short positions (-1 to 1 position weights)
+- Support multiple LLM providers running simultaneously
 
 ### 🏗️ System Architecture
 
@@ -279,6 +331,8 @@ uv sync
 #### 3. Configure API Key
 
 Edit `python_mcp_host/model_config.json`:
+
+**Gemini Configuration Example:**
 ```json
 [
   {
@@ -292,9 +346,50 @@ Edit `python_mcp_host/model_config.json`:
 ]
 ```
 
-Or set environment variable:
+**DeepSeek Configuration Example:**
+```json
+[
+  {
+    "port": 5002,
+    "model_id": "deepseek_one",
+    "account_id": "okx_test",
+    "llm_provider": "deepseek",
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "model_name": "deepseek-chat",
+    "base_url": "https://api.deepseek.com"
+  }
+]
+```
+
+**Using Multiple LLMs:**
+```json
+[
+  {
+    "port": 5001,
+    "model_id": "gemini_one",
+    "account_id": "okx_test",
+    "llm_provider": "gemini",
+    "api_key": "YOUR_GEMINI_API_KEY",
+    "model_name": "gemini-2.5-flash-lite"
+  },
+  {
+    "port": 5002,
+    "model_id": "deepseek_one",
+    "account_id": "okx_test",
+    "llm_provider": "deepseek",
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "model_name": "deepseek-chat"
+  }
+]
+```
+
+Or set environment variables:
 ```bash
+# Gemini
 export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+
+# DeepSeek
+export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
 ```
 
 #### 4. Configure Trading Account
@@ -460,11 +555,23 @@ Price for DOGE_USDT_PERP not available yet
 ```
 **Solution**: Wait a few seconds for WebSocket price data to arrive, this is normal
 
+### 🔌 Supported LLM Providers
+
+- **Gemini**: Google's Gemini models
+  - Default model: `gemini-2.5-flash-lite`
+  - API Key env var: `GEMINI_API_KEY`
+  
+- **DeepSeek**: DeepSeek models (OpenAI compatible API)
+  - Default model: `deepseek-chat`
+  - API Key env var: `DEEPSEEK_API_KEY`
+  - Requires: `pip install openai` or `uv sync`
+
 ### 📚 More Information
 
 - Python Agent detailed docs: `python_mcp_host/README_USAGE.md`
 - Timeout configuration: `rust_mcp_server/TIMEOUT_CONFIG.md`
 - Trading style examples: `python_mcp_host/trading_style_examples.txt`
+- DeepSeek config example: `python_mcp_host/model_config.deepseek.example.json`
 
 ---
 
@@ -527,4 +634,6 @@ For issues, please check:
 2. Port numbers match (default 5001)
 3. Network connection is normal
 4. Check error messages in logs
+
+
 

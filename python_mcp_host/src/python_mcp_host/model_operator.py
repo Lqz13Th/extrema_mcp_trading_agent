@@ -265,9 +265,8 @@ class LLMLoader:
             prompt = ""
         
         # 从metadata获取额外的生成参数
-        # 优化：减少默认 token 数量以加快响应速度，避免超时
         temperature = float(alt_tensor.metadata.get("temperature", "0.7"))
-        max_tokens = int(alt_tensor.metadata.get("max_tokens", "300"))  # 从 1000 减少到 300，加快响应
+        max_tokens = int(alt_tensor.metadata.get("max_tokens", "1000"))
         
         # 调用LLM
         try:
@@ -278,9 +277,6 @@ class LLMLoader:
                     "max_output_tokens": max_tokens,
                 }
             )
-        except Exception as e:
-            logger.exception(f"[LLMLoader] LLM prediction failed: {e}")
-            response_text = f"ERROR: {str(e)}"
         except Exception as e:
             logger.exception(f"[LLMLoader] LLM prediction failed: {e}")
             response_text = f"ERROR: {str(e)}"

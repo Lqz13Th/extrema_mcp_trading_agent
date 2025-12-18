@@ -26,7 +26,7 @@ use super::{server_utils::{ModelConfig, load_model_config}};
 #[derive(Clone, Debug)]
 pub struct McpServer {
     binance_cm_cli: BinanceCmCli,
-    okx_cli: OkxCli,
+    binance_um_cli: BinanceUmCli, // Public Binance UM Futures client (no API keys)
     pub px: HashMap<String, f64>,
     pub model_config: HashMap<String, ModelConfig>,
     pub target_weights: TargetWeights,
@@ -44,7 +44,7 @@ impl McpServer {
         Self {
             px: HashMap::new(),
             binance_cm_cli: BinanceCmCli::default(),
-            okx_cli: OkxCli::default(),
+            binance_um_cli: BinanceUmCli::default(),
             model_config: HashMap::new(),
             target_weights: Arc::new(DashMap::default()),
             command_handles: Vec::new(),
@@ -200,11 +200,10 @@ impl McpServer {
     async fn send_data_to_model(&self, data: &DataFrame) -> InfraResult<()> {
         for (model_id, _cfg) in &self.model_config {
             let inst = "DOGE_USDT_PERP".to_string();
-            // 如果价格不存在，使用默认值 0.0（价格会在收到 trade 数据后更新）
             let px = self.px.get(&inst).copied().unwrap_or(0.0);
             
             if px == 0.0 {
-                warn!("Price for {} not available yet, using 0.0. Waiting for trade data...", inst);
+                warn!("Price for {} not available yet, using 0.0. Waiting for data...", inst);
                 // 可以选择跳过这次发送，等待价格数据
                 continue;
             }
@@ -239,33 +238,36 @@ impl McpServer {
         Ok(())
     }
 
-    pub(crate) async fn connect_channel(&self, channel: &WsChannel) -> InfraResult<()> {
+    pub async fn connect_channel(&self, channel: &WsChannel) -> InfraResult<()> {
         if let Some(handle) = self.find_ws_handle(channel, 1) {
-            info!("Sending connect to {:?}", handle);
+            info!("[BinanceStrategy] Sending connect to {:?}", handle);
 
             // Step 1: Request connection URL
-            let ws_url = self.okx_cli.get_public_connect_msg(channel).await?;
+            let ws_url = self.binance_um_cli.get_public_connect_msg(channel).await?;
             let (tx, rx) = oneshot::channel();
             let cmd = TaskCommand::WsConnect {
                 msg: ws_url,
                 ack: AckHandle::new(tx),
             };
-            handle.send_command(cmd, Some((AckStatus::WsConnect, rx))).await?;
-
-            let insts = ["DOGE_USDT_PERP".to_string()];
-
-            let ws_msg = self.okx_cli
-                .get_public_sub_msg(channel, Some(&insts))
+            handle
+                .send_command(cmd, Some((AckStatus::WsConnect, rx)))
                 .await?;
 
-            let (tx, rx) = oneshot::channel();
+            let ws_msg = self
+                .binance_um_cli
+                .get_public_sub_msg(channel, Some(&["DOGE_USDT_PERP".into()]))
+                .await?;
+
             let cmd = TaskCommand::WsMessage {
                 msg: ws_msg,
-                ack: AckHandle::new(tx),
+                ack: AckHandle::none(), // no need to wait for ack
             };
-            handle.send_command(cmd, Some((AckStatus::WsMessage, rx))).await?;
+            handle.send_command(cmd, None).await?;
         } else {
-            warn!(" No handle found for channel {:?}", channel);
+            warn!(
+                "[BinanceStrategy] No handle found for channel {:?}",
+                channel
+            );
         }
 
         Ok(())

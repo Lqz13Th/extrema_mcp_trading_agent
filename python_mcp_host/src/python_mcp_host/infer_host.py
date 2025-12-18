@@ -131,15 +131,26 @@ def alt_tensor_to_prompt(alt_tensor: AltTensor, trading_style: str = None) -> st
             prompt_parts.append(f"  ... (共 {len(data_values)} 个特征)")
         prompt_parts.append("")
     
-    # 任务要求（简化版本，加快 LLM 响应速度）
+    # 任务要求
     prompt_parts.append("## 任务要求")
-    prompt_parts.append("请根据以上市场数据做出交易决策。")
+    prompt_parts.append("请仔细分析以上市场数据，特别是标准化特征（Z-Score）的数值和趋势，做出交易决策。")
     prompt_parts.append("")
-    prompt_parts.append("输出格式（必须）：POSITION_SIZE=<数值>")
-    prompt_parts.append("- 数值范围：-1到1（1=满仓做多，0=空仓，-1=满仓做空）")
-    prompt_parts.append("- 示例：POSITION_SIZE=0.5 或 POSITION_SIZE=-0.3")
+    prompt_parts.append("分析要点：")
+    prompt_parts.append("1. 关注 Z-Score 特征的绝对值，绝对值越大表示市场异常程度越高")
+    prompt_parts.append("2. 正值表示高于历史均值，负值表示低于历史均值")
+    prompt_parts.append("3. 结合当前价格和仓位，评估风险和机会")
     prompt_parts.append("")
-    prompt_parts.append("请直接输出 POSITION_SIZE=... 格式：")
+    prompt_parts.append("输出格式要求：")
+    prompt_parts.append("1. 如果需要调整仓位，请输出: POSITION_SIZE=<-1到1之间的数值>")
+    prompt_parts.append("   例如: POSITION_SIZE=0.5 表示将仓位调整到50%做多")
+    prompt_parts.append("   例如: POSITION_SIZE=-0.5 表示将仓位调整到50%做空")
+    prompt_parts.append("   例如: POSITION_SIZE=0.0 表示平仓（空仓）")
+    prompt_parts.append("   例如: POSITION_SIZE=1.0 表示满仓做多")
+    prompt_parts.append("   例如: POSITION_SIZE=-1.0 表示满仓做空")
+    prompt_parts.append("2. 如果不需要调整仓位，可以输出: POSITION_SIZE=<当前仓位>")
+    prompt_parts.append("3. 请简要说明你的决策理由，特别是基于哪些特征做出的判断")
+    prompt_parts.append("")
+    prompt_parts.append("请开始分析并给出交易决策：")
     
     return "\n".join(prompt_parts)
 
@@ -277,7 +288,7 @@ def run_server(port: int, config_path: str, trading_style: str = None):
             target_pos = result_metadata.get("target_position", result_metadata.get("pos_weight", "N/A"))
             
             # 显示 LLM 响应摘要
-            response_preview = response[:3000] + "..." if len(response) > 3000 else response
+            response_preview = response
             logger.info(f"[Agent] 💬 LLM Response: {response_preview}")
             
             # 显示交易决策

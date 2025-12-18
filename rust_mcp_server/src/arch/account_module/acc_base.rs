@@ -72,6 +72,8 @@ impl AccountManager {
     }
 
     pub async fn process_weights(&mut self) -> InfraResult<()> {
+        sleep(Duration::from_millis(100)).await;
+
         for account in self.account_infos.values_mut() {
             if let Err(e) = account
                 .process_weight(&self.target_weights, &self.instrument_infos)

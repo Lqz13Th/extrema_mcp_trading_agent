@@ -36,18 +36,18 @@ impl EventHandler for McpServer {
     }
 
     async fn on_ws_event(&mut self, msg: InfraMsg<WsTaskInfo>) {
-        if !matches!(msg.data.ws_channel, WsChannel::Trades(..)) {
+        if !matches!(msg.data.ws_channel, WsChannel::Candles(..)) {
             return;
         }
 
         if let Err(e) = self.connect_channel(&msg.data.ws_channel).await {
-            error!("Failed to connect trade channel: {:?}", e);
+            error!("Failed to connect channel: {:?}", e);
         }
     }
 
-    async fn on_trade(&mut self, msg: InfraMsg<Vec<WsTrade>>) {
+    async fn on_candle(&mut self, msg: InfraMsg<Vec<WsCandle>>) {
         for t in msg.data.iter() {
-            self.px.insert(t.inst.to_string(), t.price);
+            self.px.insert(t.inst.to_string(), t.open);
         }
     }
 }
